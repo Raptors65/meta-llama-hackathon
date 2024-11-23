@@ -1,35 +1,11 @@
-"use client";
-
-import ForceGraph2D from "react-force-graph-2d";
-import Image from "next/image";
-
 export default function Home() {
-  const graphData = {
-    nodes: [
-      { 
-        "id": "id1",
-        "name": "name1",
-        "val": 1 
-      },
-      { 
-        "id": "id2",
-        "name": "name2",
-        "val": 10 
-      },
-    ],
-    links: [
-      {
-        "source": "id1",
-        "target": "id2"
-      },
-    ]
-  }
 
   return (
-    <div>
-      <ForceGraph2D
-        graphData={graphData}
-      />
-    </div>
+    <main className="flex justify-center items-center h-screen w-screen">
+      <div className="flex justify-center flex-col">
+        <img src="/logo.png" width={405} height={180} />
+        <a href="/chat" className="rounded-full text-xl text-center p-5 bg-[#2C2C2C] text-white shadow-md mt-5">Begin your journey</a>
+      </div>
+    </main>
   );
 }
