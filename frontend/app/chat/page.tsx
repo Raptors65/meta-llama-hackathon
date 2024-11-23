@@ -55,6 +55,8 @@ export default function Chat() {
           graphData={graphData}
         />
       }
+      <a href="/api/auth/logout">Logout</a>
     </main>
+    
   );
 }
