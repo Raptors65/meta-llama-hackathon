@@ -39,9 +39,10 @@ export default function Chat() {
       {graphData && 
         <ForceGraph3D
           backgroundColor="white"
+          nodeAutoColorBy={(node) => node.section}
           nodeThreeObject={(node) => {
             const sprite = new SpriteText(node.name as string);
-            sprite.color = "#000";
+            sprite.color = node.color;
             sprite.backgroundColor = "#FFF"; // remove if too confusing
             sprite.textHeight = 5;
             return sprite;
@@ -51,7 +52,6 @@ export default function Chat() {
               color: 0xAAAAAA,
             })
           }
-          nodeColor="black"
           nodeLabel={() => `<span style="color: #000; background-color: #FFF"></span>`}
           height={600}
           graphData={graphData}
