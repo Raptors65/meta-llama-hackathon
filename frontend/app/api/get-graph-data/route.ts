@@ -7,7 +7,8 @@ type GetGraphDataRequest = {
   userPrompt: string;
 }
 
-const systemMessage = `The user wants to learn about a topic. Given the topic, respond with a graph, where the nodes represent subtopics and the links represent links between the subtopics. Use JSON format, e.g.,
+const systemMessage = `The user wants to learn about a topic. Given the topic, respond with a graph, where the nodes represent subtopics and the links represent links between the subtopics. Use JSON format and do not output anything other than the JSON itself. For example:
+
 {
     "nodes": [ 
         { 
@@ -19,13 +20,13 @@ const systemMessage = `The user wants to learn about a topic. Given the topic, r
           "id": "id2",
           "name": "name2",
           "val": 10 
-        }
+        },
     ],
     "links": [
         {
             "source": "id1",
             "target": "id2"
-        }
+        },
     ]
 }`
 
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
   })
 
   const result = await generateText({
-    model: nebius("meta-llama/Meta-Llama-3.1-405B-Instruct"),
+    model: nebius("meta-llama/Meta-Llama-3.1-70B-Instruct"),
     messages,
   });
 

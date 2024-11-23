@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import clsx from "clsx";
 import * as THREE from 'three';
+import SpriteText from "three-spritetext";
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
 
@@ -16,7 +17,7 @@ export default function Chat() {
     setIsLoading(true);
     const response = await fetch("/api/get-graph-data", {
       method: "POST",
-      body: JSON.stringify({ userPrompt: "What is an embedding?" }),
+      body: JSON.stringify({ userPrompt: prompt }),
       headers: {
         'Content-Type': 'application/json',
       }
@@ -38,19 +39,20 @@ export default function Chat() {
       {graphData && 
         <ForceGraph3D
           backgroundColor="white"
-          nodeThreeObject={() => {
-            const sphere = new THREE.SphereGeometry(10);
-            const material = new THREE.MeshBasicMaterial( { color: 0x000000, opacity: 0.5, transparent: true } ); 
-            const mesh = new THREE.Mesh(sphere, material);
-            return mesh;
+          nodeThreeObject={(node) => {
+            const sprite = new SpriteText(node.name as string);
+            sprite.color = "#000";
+            sprite.backgroundColor = "#FFF"; // remove if too confusing
+            sprite.textHeight = 5;
+            return sprite;
           }}
-          linkMaterial={(link) =>
+          linkMaterial={() =>
             new THREE.LineBasicMaterial({
-              color: 0x000000, // Default to blue if no color specified
+              color: 0xAAAAAA,
             })
           }
           nodeColor="black"
-          nodeLabel={(node) => `<span style="color: #000">${node.name}</span>`}
+          nodeLabel={() => `<span style="color: #000; background-color: #FFF"></span>`}
           height={600}
           graphData={graphData}
         />
