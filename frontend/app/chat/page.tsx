@@ -38,12 +38,19 @@ export default function Chat() {
       {graphData && 
         <ForceGraph3D
           backgroundColor="white"
-          nodeThreeObject={(node) => {
-            const sphere = new THREE.SphereGeometry(node.x, node.y, node.z);
-            const material = new THREE.MeshBasicMaterial( { color: 0x000000 } ); 
+          nodeThreeObject={() => {
+            const sphere = new THREE.SphereGeometry(10);
+            const material = new THREE.MeshBasicMaterial( { color: 0x000000, opacity: 0.5, transparent: true } ); 
             const mesh = new THREE.Mesh(sphere, material);
             return mesh;
           }}
+          linkMaterial={(link) =>
+            new THREE.LineBasicMaterial({
+              color: 0x000000, // Default to blue if no color specified
+            })
+          }
+          nodeColor="black"
+          nodeLabel={(node) => `<span style="color: #000">${node.name}</span>`}
           height={600}
           graphData={graphData}
         />
