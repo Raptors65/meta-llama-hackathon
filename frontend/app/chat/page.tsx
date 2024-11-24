@@ -405,6 +405,7 @@ export default function Chat() {
                     <p className="overflow-ellipsis text-sm font-semibold text-gray-700">{user.name}</p>
                     <p className="overflow-ellipsis text-sm text-gray-500 truncate">{user.email}</p>
                   </div>
+                  {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                   <a
                     href="/api/auth/logout"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
@@ -434,7 +435,7 @@ export default function Chat() {
                   onClick={() => setIsProfileOpen(false)} 
                 />
                 <div className="absolute right-0 mt-2 w-48 py-2 bg-white rounded-lg shadow-lg border border-gray-100 z-20">
-
+                  {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                   <a
                     href="/api/auth/logout"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
