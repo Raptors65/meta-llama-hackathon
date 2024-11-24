@@ -17,6 +17,7 @@ import { useUser } from '@auth0/nextjs-auth0/client';
 import pdfToText from 'react-pdftotext'
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import wiki from "wikipedia";
 
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
@@ -128,6 +129,15 @@ export default function Chat() {
   const getGraphData = async (p = prompt) => {
     setIsLoading(true);
     console.log(graphData);
+
+    if (p.startsWith("https:")) {
+      const page = await wiki.page(p.split("/").slice(-1)[0]);
+
+      const summary = await page.summary();
+
+      p = summary.description;
+    }
+
     const response = await fetch("/api/get-graph-data", {
       method: "POST",
       // @ts-expect-error expected error
