@@ -405,13 +405,13 @@ export default function Chat() {
                     <p className="overflow-ellipsis text-sm font-semibold text-gray-700">{user.name}</p>
                     <p className="overflow-ellipsis text-sm text-gray-500 truncate">{user.email}</p>
                   </div>
-                  <Link
+                  <a
                     href="/api/auth/logout"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Log Out
-                  </Link>
+                  </a>
                 </div>
               </>
             )}
@@ -435,13 +435,13 @@ export default function Chat() {
                 />
                 <div className="absolute right-0 mt-2 w-48 py-2 bg-white rounded-lg shadow-lg border border-gray-100 z-20">
 
-                  <Link
+                  <a
                     href="/api/auth/logout"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Home Page
-                  </Link>
+                  </a>
                 </div>
               </>
             )}
