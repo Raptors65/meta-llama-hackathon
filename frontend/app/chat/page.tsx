@@ -58,10 +58,10 @@ export default function Chat() {
     console.log("Generated Summary:", generatedSummary);
     const { error } = await supabase.from('graph_data').insert([
       {
-        user_id: user?.sub, // Assuming `user` from Auth0 has a unique `sub` ID
+        user_id: user?.sub,
         prompt: p,
         generated_summary: generatedSummary,
-        graph_data: data, // Ensure your Supabase table has a column to store JSON
+        graph_data: data,
         created_at: new Date().toISOString(),
       }
     ]);
