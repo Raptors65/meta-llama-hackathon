@@ -32,6 +32,7 @@ interface QueryHistory {
   id: string;
   prompt: string;
   generated_summary: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   graph_data: any;
   created_at: string;
 }
@@ -143,7 +144,7 @@ export default function Chat() {
     if (!graphData) {
       console.log("creating object", currentTime, user?.sub);
       const generatedSummary = await getSummary(p);
-      const { error } = await supabase.from('graph_data').insert([
+      await supabase.from('graph_data').insert([
         {
           user_id: user?.sub,
           prompt: p,
@@ -346,7 +347,7 @@ export default function Chat() {
           <Clock size={20} />
         </button>
           ) : (
-            <a
+            <Link
               href="/api/auth/login?returnTo=/chat"
               className="fixed left-4 top-4 z-20 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow group"
               title="Login to Access History"
@@ -357,7 +358,7 @@ export default function Chat() {
                   Login to access history
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
       {/* Profile picture, click to sign out.  If guest, click to return to home */}
       {/* Signed in profile */}
