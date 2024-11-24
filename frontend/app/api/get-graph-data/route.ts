@@ -257,10 +257,10 @@ export async function POST(req: Request) {
   const { userPrompt, graphData } = await req.json() as GetGraphDataRequest;
   console.log(graphData);
 
-  let messages;
+  // let messages;
   if ("links" in graphData) {
     console.log("follow")
-    messages = [
+    const messages = [
       {
         role: "system",
         content: followSystemMessage
@@ -274,33 +274,33 @@ export async function POST(req: Request) {
         content: userPrompt
       }
     ] as (CoreUserMessage | CoreSystemMessage)[];
+
+    const nebius = createOpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey: process.env.NEBIUS_API_KEY
+    })
+  
+    const result = await generateText({
+      model: nebius("llama-3.2-90b-text-preview"),
+      messages,
+    });
+  
+    // console.log(`'''${result.text}'''`);
+  
+    const data = JSON.parse(result.text);
+  
+    return Response.json(data);
   } else {
     console.log("straight")
-    messages = [
-      {
-        role: "system",
-        content: systemMessage
-      },
-      {
-        role: "user",
-        content: userPrompt
+    
+    const response = await fetch("http://127.0.0.1:5000/api/make-graph", {
+      method: "GET",
+      headers: {
+        "query": userPrompt,
+        "Accept": "application/json"
       }
-    ] as (CoreUserMessage | CoreSystemMessage)[];
+    });
+
+    return Response.json(await response.json());
   }
-
-  const nebius = createOpenAI({
-    baseURL: "https://api.groq.com/openai/v1",
-    apiKey: process.env.NEBIUS_API_KEY
-  })
-
-  const result = await generateText({
-    model: nebius("llama-3.2-90b-text-preview"),
-    messages,
-  });
-
-  // console.log(`'''${result.text}'''`);
-
-  const data = JSON.parse(result.text);
-
-  return Response.json(data);
 }
