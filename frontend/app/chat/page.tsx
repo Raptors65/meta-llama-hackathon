@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEventHandler, useState } from "react";
+import { FormEventHandler, useEffect,useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import clsx from "clsx";
@@ -43,6 +43,39 @@ export default function Chat() {
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
+  // Runs upon login, checks if someone is logged in and fetches most recent query if so
+  useEffect(() => {
+    if (user?.sub) {
+      fetchMostRecentQuery();
+    }
+  }, [user]);
+
+  const fetchMostRecentQuery = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('graph_data')
+        .select('*')
+        .eq('user_id', user?.sub)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching recent query:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const recentQuery = data[0];
+        setPrompt(recentQuery.prompt);
+        console.log("SUMMARY 2 CALL")
+        setSummary(recentQuery.generated_summary);
+        setGraphData(recentQuery.graph_data);
+      }
+    } catch (error) {
+      console.error('Error fetching recent query:', error);
+    }
+  };
+
   const getGraphData = async (p = prompt) => {
     setIsLoading(true);
     const response = await fetch("/api/get-graph-data", {
@@ -55,7 +88,6 @@ export default function Chat() {
 
     const data = await response.json();
     const generatedSummary = await getSummary(p);
-    console.log("Generated Summary:", generatedSummary);
     const { error } = await supabase.from('graph_data').insert([
       {
         user_id: user?.sub,
@@ -162,6 +194,7 @@ export default function Chat() {
           const text = subChunk.trim().slice(3, -1).replaceAll("\\n", "\n");
           completeSummary += text; // Append chunk to the temporary variable
           // Update state as each chunk arrives
+          console.log("SUMMARY loop CALL")
           setSummary((prev) => prev + subChunk.trim().slice(3, -1).replaceAll("\\n", "\n"));
         }
       }
@@ -170,9 +203,10 @@ export default function Chat() {
   };
 
   const sendPrompt = () => {
+    console.log("SUMMARY 1 CALL")
     setSummary("");
     getGraphData();
-    getSummary();
+    // getSummary(); // commenting this out for now to fix the double printing
   };
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
@@ -186,9 +220,8 @@ export default function Chat() {
     setError('');
     
     const text = await pdfToText(file);
-
+    setSummary("");
     getGraphData(text);
-    getSummary(text);
   };
 
   return (
@@ -317,7 +350,7 @@ export default function Chat() {
       <div className="flex justify-center mt-5">
         {isLoading &&
         <div className="flex items-center">
-          <div className="mr-2 inline-block text-sm text-gray-700">Generating graph...</div>
+          <div className="mr-2 inline-block text-sm text-gray-700">Generating response...</div>
           <Loader  />
         </div>}
       </div>
