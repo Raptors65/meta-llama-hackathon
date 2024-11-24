@@ -6,12 +6,7 @@ import dynamic from "next/dynamic";
 import clsx from "clsx";
 import * as THREE from 'three';
 import SpriteText from "three-spritetext";
-import { useChat } from "ai/react";
 import Loader from "@/components/loader";
-import {
-  ReactFlow,
-} from '@xyflow/react';
-import { readPdfText } from 'pdf-text-reader';
 
 import logo from "../logo.png";
 import { Switch } from "@/components/ui/switch";
@@ -20,6 +15,7 @@ import { GraphData } from "react-force-graph-3d";
 import { LogOut, User } from 'lucide-react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import pdfToText from 'react-pdftotext'
+import Link from "next/link";
 
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
@@ -35,20 +31,24 @@ export default function Chat() {
   const { user, isLoading: isLoadingUser } = useUser();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const [error, setError] = useState("");
+  const [, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
   const getGraphData = async (p = prompt) => {
     setIsLoading(true);
+    console.log(graphData);
     const response = await fetch("/api/get-graph-data", {
       method: "POST",
-      body: JSON.stringify({ userPrompt: p }),
+      // @ts-expect-error expected error
+      body: JSON.stringify({ userPrompt: p, graphData: graphData ? { nodes: graphData.nodes.map((node) => ({ id: node.id, name: node.name, group: node.group, description: node.description })), links: graphData.links.map((link) => ({ source: link.source.id, target: link.target.id, description: link.description })) } : {} }),
       headers: {
         'Content-Type': 'application/json',
       }
     });
 
-    setGraphData(await response.json());
+    const newData = await response.json();
+    setGraphData(newData);
+    console.log(newData);
 
     // setGraphData({
     //   nodes: [
@@ -146,9 +146,11 @@ export default function Chat() {
   };
 
   const sendPrompt = () => {
-    setSummary("");
+    // setSummary("");
     getGraphData();
-    getSummary();
+    if (!graphData) {
+      getSummary();
+    }
   };
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
@@ -164,7 +166,9 @@ export default function Chat() {
     const text = await pdfToText(file);
 
     getGraphData(text);
-    getSummary(text);
+    if (!graphData) {
+      getSummary(text);
+    }
   };
 
   return (
@@ -204,13 +208,13 @@ export default function Chat() {
                     <p className="overflow-ellipsis text-sm font-semibold text-gray-700">{user.name}</p>
                     <p className="overflow-ellipsis text-sm text-gray-500 truncate">{user.email}</p>
                   </div>
-                  <a
+                  <Link
                     href="/api/auth/logout"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Log Out
-                  </a>
+                  </Link>
                 </div>
               </>
             )}
@@ -233,13 +237,13 @@ export default function Chat() {
                 />
                 <div className="absolute right-0 mt-2 w-48 py-2 bg-white rounded-lg shadow-lg border border-gray-100 z-20">
 
-                  <a
+                  <Link
                     href="/api/auth/logout"
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
                     Home Page
-                  </a>
+                  </Link>
                 </div>
               </>
             )}
@@ -258,7 +262,7 @@ export default function Chat() {
                     onInput={(e) => {
                       const target = e.target as HTMLTextAreaElement;
                       target.style.height = "auto"; // Reset height
-                      const minHeight = target.scrollHeight; // Set minimum height
+                      // const minHeight = target.scrollHeight; // Set minimum height
                       target.style.height = `${(target.scrollHeight)}px`;; // Set to scroll height
                     }}
                     className="text-lg px-4 py-2 rounded-3xl w-[32rem] border-[#671372] border-2 mt-5 resize-none overflow-hidden"
@@ -319,6 +323,7 @@ export default function Chat() {
               group.add(sphere);
               return group;
             }}
+            onNodeClick={(node) => setPrompt(node.name)}
             linkMaterial={() =>
               new THREE.LineBasicMaterial({
                 color: 0xAAAAAA,
@@ -341,7 +346,7 @@ export default function Chat() {
             const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
 
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            // @ts-ignore
+            // @ts-expect-error expected
             ctx.fillRect(node.x! - bckgDimensions[0] / 2, node.y! - bckgDimensions[1] / 2, ...bckgDimensions);
 
             ctx.textAlign = 'center';

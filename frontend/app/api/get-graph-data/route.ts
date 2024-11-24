@@ -1,10 +1,12 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { CoreSystemMessage, CoreUserMessage, generateText } from "ai";
+import { GraphData } from "react-force-graph-3d";
 
 export const dynamic = "force-dynamic";
 
 type GetGraphDataRequest = {
   userPrompt: string;
+  graphData: GraphData | Record<PropertyKey, never>;
 }
 
 const systemMessage = `The user wants to learn about a topic. Given the topic, respond with a graph, where the nodes represent subtopics, the links represent links between the subtopics, and groups are general categories of subtopics (0 should always be the main question). Use JSON format and do not output anything other than the JSON itself. For example:
@@ -245,24 +247,46 @@ const systemMessage = `The user wants to learn about a topic. Given the topic, r
       "description": "Poor infrastructure affects driver behavior and leads to inefficiencies."
     }
   ]
-}`
+}`;
+
+const followSystemMessage = `The user has a graph and the user wants to learn more about a topic or text. Given the topic or text, respond with a graph that expands the graph you last provided (keep everything from your previous graph), where the nodes represent subtopics, the links represent links between the subtopics, and groups are general categories of subtopics (0 should always be the main question). Use JSON format and do not output anything other than the JSON itself.`;
 
 export async function POST(req: Request) {
 
   console.log("req received")
-  const { userPrompt } = await req.json() as GetGraphDataRequest;
-  console.log(userPrompt);
+  const { userPrompt, graphData } = await req.json() as GetGraphDataRequest;
+  console.log(graphData);
 
-  const messages = [
-    {
-      role: "system",
-      content: systemMessage
-    },
-    {
-      role: "user",
-      content: userPrompt
-    }
-  ] as (CoreUserMessage | CoreSystemMessage)[];
+  let messages;
+  if ("links" in graphData) {
+    console.log("follow")
+    messages = [
+      {
+        role: "system",
+        content: followSystemMessage
+      },
+      {
+        role: "assistant",
+        content: JSON.stringify(graphData)
+      },
+      {
+        role: "user",
+        content: userPrompt
+      }
+    ] as (CoreUserMessage | CoreSystemMessage)[];
+  } else {
+    console.log("straight")
+    messages = [
+      {
+        role: "system",
+        content: systemMessage
+      },
+      {
+        role: "user",
+        content: userPrompt
+      }
+    ] as (CoreUserMessage | CoreSystemMessage)[];
+  }
 
   const nebius = createOpenAI({
     baseURL: "https://api.groq.com/openai/v1",
@@ -274,7 +298,7 @@ export async function POST(req: Request) {
     messages,
   });
 
-  console.log(`'''${result.text}'''`);
+  // console.log(`'''${result.text}'''`);
 
   const data = JSON.parse(result.text);
 
