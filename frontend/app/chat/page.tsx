@@ -8,18 +8,23 @@ import * as THREE from 'three';
 import SpriteText from "three-spritetext";
 import { useChat } from "ai/react";
 import Loader from "@/components/loader";
+import {
+  ReactFlow,
+} from '@xyflow/react';
 
 import logo from "../logo.png";
 import { Switch } from "@/components/ui/switch";
+import { GraphData } from "react-force-graph-3d";
 
 import { LogOut, User } from 'lucide-react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
+const ForceGraph2D = dynamic(() => import("react-force-graph-2d"));
 
 export default function Chat() {
-  const [graphData, setGraphData] = useState(null);
+  const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState("");
@@ -30,15 +35,79 @@ export default function Chat() {
 
   const getGraphData = async () => {
     setIsLoading(true);
-    const response = await fetch("/api/get-graph-data", {
-      method: "POST",
-      body: JSON.stringify({ userPrompt: prompt }),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    // const response = await fetch("/api/get-graph-data", {
+    //   method: "POST",
+    //   body: JSON.stringify({ userPrompt: prompt }),
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   }
+    // });
 
-    setGraphData(await response.json());
+    // setGraphData(await response.json());
+
+    setGraphData({
+      nodes: [
+        { id: "main_question", name: "What causes urban traffic congestion?", group: 0, description: "How can those causes be addressed effectively?" },
+        { id: "public_transport", name: "Public Transport", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
+        { id: "road_infrastructure", name: "Road Infrastructure", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
+        { id: "technology", name: "Technology", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
+        { id: "policies_and_governance", name: "Policies & Governance", group: 4, description: "Subsidies, governance improve public transport effectiveness." },
+        { id: "human_behavior", name: "Human Behavior", group: 5, description: "Convenience often leads to preference for private cars." },
+    
+        { id: "modes", name: "Modes", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
+        { id: "accessibility", name: "Accessibility", group: 1, description: "Convenience of routes and stops improves adoption." },
+        { id: "challenges", name: "Challenges", group: 1, description: "Funding and maintenance issues limit effectiveness." },
+    
+        { id: "capacity", name: "Capacity", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
+        { id: "design", name: "Design", group: 2, description: "Poor layouts lead to bottlenecks and inefficiencies." },
+        { id: "upgradability", name: "Upgradability", group: 2, description: "Limited space in urban areas complicates expansion." },
+    
+        { id: "traffic_management", name: "Traffic Management", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
+        { id: "navigation_tools", name: "Navigation Tools", group: 3, description: "Apps like Google Maps ease congestion via better route planning." },
+        { id: "automation", name: "Automation", group: 3, description: "Autonomous vehicles offer long-term congestion solutions." },
+    
+        { id: "congestion_pricing", name: "Congestion Pricing", group: 4, description: "Charges during peak hours reduce unnecessary trips." },
+        { id: "incentives", name: "Incentives", group: 4, description: "Encourage carpooling, biking, or other alternatives." },
+        { id: "regulations", name: "Regulations", group: 4, description: "Improved rules reduce traffic chaos and accidents." },
+    
+        { id: "preferences", name: "Preferences", group: 5, description: "Convenience often leads to preference for private cars." },
+        { id: "remote_work", name: "Remote Work", group: 5, description: "Reduces the number of commuters." },
+        { id: "shared_mobility", name: "Shared Mobility", group: 5, description: "Carpooling and ride-sharing cut down vehicle numbers." }
+      ],
+      links: [
+        { source: "main_question", target: "public_transport" },
+        { source: "main_question", target: "road_infrastructure" },
+        { source: "main_question", target: "technology" },
+        { source: "main_question", target: "policies_and_governance" },
+        { source: "main_question", target: "human_behavior" },
+        
+        { source: "public_transport", target: "modes" },
+        { source: "public_transport", target: "accessibility" },
+        { source: "public_transport", target: "challenges" },
+    
+        { source: "road_infrastructure", target: "capacity" },
+        { source: "road_infrastructure", target: "design" },
+        { source: "road_infrastructure", target: "upgradability" },
+    
+        { source: "technology", target: "traffic_management" },
+        { source: "technology", target: "navigation_tools" },
+        { source: "technology", target: "automation" },
+    
+        { source: "policies_and_governance", target: "congestion_pricing" },
+        { source: "policies_and_governance", target: "incentives" },
+        { source: "policies_and_governance", target: "regulations" },
+    
+        { source: "human_behavior", target: "preferences" },
+        { source: "human_behavior", target: "remote_work" },
+        { source: "human_behavior", target: "shared_mobility" },
+    
+        { source: "public_transport", target: "road_infrastructure", description: "Efficient public transport requires well-maintained roads and dedicated lanes." },
+        { source: "public_transport", target: "policies_and_governance", description: "Subsidies and governance improve public transport effectiveness." },
+        { source: "technology", target: "road_infrastructure", description: "Technology like smart traffic lights depends on good infrastructure." },
+        { source: "human_behavior", target: "policies_and_governance", description: "Policies influence commuting choices and encourage alternatives like carpooling." },
+        { source: "road_infrastructure", target: "human_behavior", description: "Poor infrastructure affects driver behavior and leads to inefficiencies." }
+      ]
+    });
     setIsLoading(false);
   };
 
@@ -140,12 +209,12 @@ export default function Chat() {
           <div className="text-xl">Switch to 3D</div>
           <Switch
             checked={is3D}
-            onCheckedChange={(e) => setIs3D(e.valueOf)}
+            onCheckedChange={(e) => setIs3D(e.valueOf())}
           />
         </div>
         <div className="text-[#757575] text-sm">Get a comprehensive diagram to deepen your knowledge</div>
       </div>
-      <p className="max-w-3xl">{summary}</p>
+      <p className="max-w-3xl mt-5">{summary}</p>
       <div className="flex justify-center mt-5">
         {isLoading &&
         <div className="flex items-center">
@@ -153,28 +222,69 @@ export default function Chat() {
           <Loader  />
         </div>}
       </div>
-      {graphData && 
-        <ForceGraph3D
+      {graphData && (
+        is3D ? 
+          <ForceGraph3D
+            backgroundColor="white"
+            nodeAutoColorBy={(node) => node.group}
+            nodeThreeObject={(node) => {
+              const sprite = new SpriteText(node.name as string + "\n\n\n");
+              sprite.color = node.group === 0 ? "#000000" : node.color;
+              // sprite.backgroundColor = "#FFF"; // remove if too confusing
+              sprite.textHeight = node.group === 0 ? 10 : 5;
+
+              const geometry = new THREE.SphereGeometry(node.group === 0 ? 10 : 5);
+              const material = new THREE.MeshBasicMaterial({ color: node.group === 0 ? "#000000" : node.color, transparent: true, opacity: 1 });
+              const sphere = new THREE.Mesh(geometry, material);
+
+              // sprite.position.add(new THREE.Vector3(0, 0, -20));
+              
+              const group = new THREE.Group();
+              group.add(sprite);
+              group.add(sphere);
+              return group;
+            }}
+            linkMaterial={() =>
+              new THREE.LineBasicMaterial({
+                color: 0xAAAAAA,
+              })
+            }
+            nodeLabel={(node) => `<span style="color: #000; background-color: #EEE; border: 1px solid black; padding: 2px 5px; border-radius: 10px;">${node.description}</span>`}
+            height={400}
+            graphData={graphData}
+          />
+        :
+        <ForceGraph2D
           backgroundColor="white"
-          nodeAutoColorBy={(node) => node.section}
-          nodeThreeObject={(node) => {
-            const sprite = new SpriteText(node.name as string);
-            sprite.color = node.color;
-            sprite.backgroundColor = "#FFF"; // remove if too confusing
-            sprite.textHeight = 5;
-            return sprite;
+          nodeAutoColorBy={(node) => node.group}
+          nodeLabel={(node) => node.description}
+          nodeCanvasObject={(node, ctx, globalScale) => {
+            const label = node.name as string;
+            const fontSize = (node.group === 0 ? 16 : 12)/globalScale;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            const textWidth = ctx.measureText(label).width;
+            const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            // @ts-ignore
+            ctx.fillRect(node.x! - bckgDimensions[0] / 2, node.y! - bckgDimensions[1] / 2, ...bckgDimensions);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = node.group === 0 ? "#000000" : node.color;
+            ctx.fillText(label, node.x!, node.y!);
+
+            node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
           }}
-          linkMaterial={() =>
-            new THREE.LineBasicMaterial({
-              color: 0xAAAAAA,
-            })
-          }
-          nodeLabel={() => `<span style="color: #000; background-color: #FFF"></span>`}
-          height={500}
-          graphData={graphData}
+          height={400}
+          graphData={graphData!}
         />
+
       }
       <p className="absolute top-2 text-gray-400">Responses are generated by AI and may not be fully accurate.</p>
+
+      <a href="/api/auth/logout">Logout</a>
+
     </main>
     
   );
