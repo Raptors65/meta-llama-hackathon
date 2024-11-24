@@ -184,7 +184,7 @@ export default function Chat() {
       <div className="w-full px-4 py-2 flex justify-end">
         {isLoadingUser ? (
           <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
-        ) : user && (
+        ) : user ? (
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -225,14 +225,57 @@ export default function Chat() {
               </>
             )}
           </div>
+        ) : (
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center justify-center w-10 h-10 rounded-full focus:outline-none focus:ring-2 focus:ring-[#671372] focus:ring-offset-2"
+            >
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gray-300">
+                <User className="w-5 h-5 text-gray-600" />
+              </div>
+            </button>
+            {isProfileOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsProfileOpen(false)} 
+                />
+                <div className="absolute right-0 mt-2 w-48 py-2 bg-white rounded-lg shadow-lg border border-gray-100 z-20">
+
+                  <a
+                    href="/api/auth/logout"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Home Page
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+          
         )}
       </div>
 
       <div className="mx-5 flex flex-col items-center mb-6">
         <Image alt="Logo" src={logo} width={227} height={101} />
         <div className="relative mt-5">
-          <input value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="What would you like to learn?" className="text-lg px-4 py-2 rounded-full w-[32rem] border-[#671372] border-2 mt-5" />
-          <button disabled={isLoading} onClick={sendPrompt} className={clsx("absolute right-2 top-7 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})}>Guide Me</button>
+          <textarea value={prompt} 
+                    onChange={(e) => setPrompt(e.target.value)} 
+                    placeholder="What would you like to learn?"
+                    rows={2}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = "auto"; // Reset height
+                      const minHeight = target.scrollHeight; // Set minimum height
+                      target.style.height = `${(target.scrollHeight)}px`;; // Set to scroll height
+                    }}
+                    className="text-lg px-4 py-2 rounded-3xl w-[32rem] border-[#671372] border-2 mt-5 resize-none overflow-hidden"
+                    style={{
+                      paddingBottom: `${prompt.split("\n").length >= 1 ? "2.3rem" : "0.5rem"}`, // Add extra padding for the last line if multiple lines exist
+                    }}/>
+          <button disabled={isLoading} onClick={sendPrompt} className={clsx("absolute bottom-3 right-2 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})}>Guide Me</button>
         </div>
       </div>
       <form onSubmit={handleSubmit}>

@@ -8,7 +8,13 @@ export default function Home() {
       <div className="flex justify-center flex-col">
         <Image alt="Logo" src={logo} width={405} height={180} />
 
-        <a href="/api/auth/login?returnTo=/chat" className="rounded-full text-xl text-center p-5 bg-[#2C2C2C] text-white shadow-md mt-5">Begin your journey</a>
+        <a href="/api/auth/login?returnTo=/chat" className="rounded-full text-xl text-center p-5 bg-[#2C2C2C] text-white shadow-md mt-5
+        transition-all duration-300 ease-in-out transform hover:shadow-lg hover:scale-105">
+        Begin your journey</a>
+        <a href="/chat" className="rounded-full text-sm text-center p-3 bg-[#e8e8e8] text-black 
+        shadow-md mt-5 absolute bottom-4 left-1/2 transform -translate-x-1/2
+        transition-all duration-300 ease-in-out transform hover:shadow-lg hover:scale-105"> 
+        Continue as guest</a>
 
       </div>
     </main>
