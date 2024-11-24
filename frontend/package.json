@@ -12,6 +12,7 @@
     "@ai-sdk/openai": "^1.0.4",
     "@auth0/nextjs-auth0": "^3.5.0",
     "@radix-ui/react-switch": "^1.1.1",
+    "@supabase/supabase-js": "^2.46.1",
     "@xyflow/react": "^12.3.5",
     "ai": "^4.0.3",
     "class-variance-authority": "^0.7.0",
