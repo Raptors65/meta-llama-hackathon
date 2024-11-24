@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEventHandler, useState } from "react";
+import { FormEventHandler, useEffect,useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import clsx from "clsx";
@@ -12,7 +12,7 @@ import logo from "../logo.png";
 import { Switch } from "@/components/ui/switch";
 import { GraphData } from "react-force-graph-3d";
 
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Clock, X} from 'lucide-react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import pdfToText from 'react-pdftotext'
 import Link from "next/link";
@@ -21,18 +21,105 @@ import Link from "next/link";
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"));
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// for history bar
+interface QueryHistory {
+  id: string;
+  prompt: string;
+  generated_summary: string;
+  graph_data: any;
+  created_at: string;
+}
+
 export default function Chat() {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [is3D, setIs3D] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([]);
 
   const { user, isLoading: isLoadingUser } = useUser();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
+
+  // Runs upon login, checks if someone is logged in and fetches most recent query if so
+  // useEffect(() => {
+  //   if (user?.sub) {
+  //     fetchMostRecentQuery();
+  //   }
+  // }, [user]);
+
+    // Runs upon login, checks if someone is logged in and fetches history if so
+    useEffect(() => {
+      if (user?.sub) {
+        fetchQueryHistory();
+      }
+    }, [user]);
+  
+    const fetchQueryHistory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('graph_data')
+          .select('*')
+          .eq('user_id', user?.sub)
+          .order('created_at', { ascending: false });
+  
+        if (error) {
+          console.error('Error fetching query history:', error);
+          return;
+        }
+  
+        if (data) {
+          setQueryHistory(data);
+        }
+      } catch (error) {
+        console.error('Error fetching query history:', error);
+      }
+    };
+  
+    const loadHistoryItem = (item: QueryHistory) => {
+      setPrompt(item.prompt);
+      setSummary(item.generated_summary);
+      setGraphData(item.graph_data);
+      // to close sidebar on click
+      setIsSidebarOpen(false);
+    };
+
+// THE COMMENTED OUT CODE IS FOR IF WE ONLY WANT MOST RECENT CHAT
+
+  // const fetchMostRecentQuery = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('graph_data')
+  //       .select('*')
+  //       .eq('user_id', user?.sub)
+  //       .order('created_at', { ascending: false })
+  //       .limit(1);
+
+  //     if (error) {
+  //       console.error('Error fetching recent query:', error);
+  //       return;
+  //     }
+
+  //     if (data && data.length > 0) {
+  //       const recentQuery = data[0];
+  //       setPrompt(recentQuery.prompt);
+  //       console.log("SUMMARY 2 CALL")
+  //       setSummary(recentQuery.generated_summary);
+  //       setGraphData(recentQuery.graph_data);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching recent query:', error);
+  //   }
+  // };
 
   const getGraphData = async (p = prompt) => {
     setIsLoading(true);
@@ -46,10 +133,20 @@ export default function Chat() {
       }
     });
 
-    const newData = await response.json();
-    setGraphData(newData);
-    console.log(newData);
+    const data = await response.json();
+    const generatedSummary = await getSummary(p);
+    const { error } = await supabase.from('graph_data').insert([
+      {
+        user_id: user?.sub,
+        prompt: p,
+        generated_summary: generatedSummary,
+        graph_data: data,
+        created_at: new Date().toISOString(),
+      }
+    ]);
 
+    setGraphData(data);
+    // setGraphData({'nodes': [{'id': 'stoicism_main', 'name': 'What are the fundamental principles, practices, and benefits of Stoicism', 'group': 0}, {'id': 'core_principles', 'name': 'Core Principles of Stoicism', 'group': 1}, {'id': 'virtue_ethics', 'name': 'Virtue Ethics', 'group': 2, 'description': 'Cultivating virtues like wisdom, justice, and self-control'}, {'id': 'reason_and_logic', 'name': 'Reason and Logic', 'group': 2, 'description': 'Emphasis on rational thinking and critical inquiry'}, {'id': 'indifference_to_external_events', 'name': 'Indifference to External Events', 'group': 2, 'description': 'Recognizing what can and cannot be controlled'}, {'id': 'living_in_accordance_with_nature', 'name': 'Living in Accordance with Nature', 'group': 2, 'description': 'Harmony with the natural order'}, {'id': 'stoic_practices_and_disciplines', 'name': 'Stoic Practices and Disciplines', 'group': 3}, {'id': 'meditation_and_reflection', 'name': 'Meditation and Reflection', 'group': 4, 'description': 'Regular introspection and self-examination'}, {'id': 'journaling_and_writing', 'name': 'Journaling and Writing', 'group': 4, 'description': 'Recording thoughts, insights, and experiences'}, {'id': 'physical_training_and_endurance', 'name': 'Physical Training and Endurance', 'group': 4, 'description': 'Building physical strength and resilience'}, {'id': 'negative_visualization', 'name': 'Negative Visualization', 'group': 4, 'description': 'Imagining and preparing for adversity'}, {'id': 'stoic_concepts_and_ideas', 'name': 'Stoic Concepts and Ideas', 'group': 5}, {'id': 'the_dichotomy_of_control', 'name': 'The Dichotomy of Control', 'group': 6, 'description': 'Recognizing what can and cannot be controlled'}, {'id': 'the_three_topoi', 'name': 'The Three Topoi', 'group': 6, 'description': 'Physical, moral, and external aspects of life'}, {'id': 'the_four_cardinal_virtues', 'name': 'The Four Cardinal Virtues', 'group': 6, 'description': 'Wisdom, justice, courage, and temperance'}, {'id': 'the_theory_of_impressions', 'name': 'The Theory of Impressions', 'group': 6, 'description': 'Understanding and managing thoughts and emotions'}, {'id': 'applying_stoicism_to_everyday_life', 'name': 'Applying Stoicism to Everyday Life', 'group': 7}, {'id': 'overcoming_anxiety_and_fear', 'name': 'Overcoming Anxiety and Fear', 'group': 8, 'description': 'Stoic strategies for managing emotions'}, {'id': 'building_resilience', 'name': 'Building Resilience', 'group': 8, 'description': 'Stoic practices for coping with adversity'}, {'id': 'improving_relationships', 'name': 'Improving Relationships', 'group': 8, 'description': 'Stoic principles for effective communication and empathy'}, {'id': 'achieving_personal_growth', 'name': 'Achieving Personal Growth', 'group': 8, 'description': 'Stoic concepts for self-improvement and self-awareness'}, {'id': 'challenges_and_criticisms_of_stoicism', 'name': 'Challenges and Criticisms of Stoicism', 'group': 9}, {'id': 'criticisms_of_stoic_emotional_suppression', 'name': 'Criticisms of Stoic Emotional Suppression', 'group': 10, 'description': 'Concerns about the health implications of suppressing emotions'}, {'id': 'difficulty_in_applying_stoic_principles', 'name': 'Difficulty in Applying Stoic Principles', 'group': 10, 'description': 'Challenges in integrating Stoic concepts into daily life'}, {'id': 'cultural_and_historical_context', 'name': 'Cultural and Historical Context', 'group': 10, 'description': 'Understanding Stoicism within its historical and cultural context'}, {'id': 'modern_adaptations_and_interpretations', 'name': 'Modern Adaptations and Interpretations', 'group': 10, 'description': 'Contemporary applications and reinterpretations of Stoicism'}], 'links': [{'source': 'stoicism_main', 'target': 'core_principles'}, {'source': 'stoicism_main', 'target': 'stoic_practices_and_disciplines'}, {'source': 'stoicism_main', 'target': 'stoic_concepts_and_ideas'}, {'source': 'stoicism_main', 'target': 'applying_stoicism_to_everyday_life'}, {'source': 'stoicism_main', 'target': 'challenges_and_criticisms_of_stoicism'}, {'source': 'core_principles', 'target': 'virtue_ethics'}, {'source': 'core_principles', 'target': 'reason_and_logic'}, {'source': 'core_principles', 'target': 'indifference_to_external_events'}, {'source': 'core_principles', 'target': 'living_in_accordance_with_nature'}, {'source': 'stoic_practices_and_disciplines', 'target': 'meditation_and_reflection'}, {'source': 'stoic_practices_and_disciplines', 'target': 'journaling_and_writing'}, {'source': 'stoic_practices_and_disciplines', 'target': 'physical_training_and_endurance'}, {'source': 'stoic_practices_and_disciplines', 'target': 'negative_visualization'}, {'source': 'stoic_concepts_and_ideas', 'target': 'the_dichotomy_of_control'}, {'source': 'stoic_concepts_and_ideas', 'target': 'the_three_topoi'}, {'source': 'stoic_concepts_and_ideas', 'target': 'the_four_cardinal_virtues'}, {'source': 'stoic_concepts_and_ideas', 'target': 'the_theory_of_impressions'}, {'source': 'applying_stoicism_to_everyday_life', 'target': 'overcoming_anxiety_and_fear'}, {'source': 'applying_stoicism_to_everyday_life', 'target': 'building_resilience'}, {'source': 'applying_stoicism_to_everyday_life', 'target': 'improving_relationships'}, {'source': 'applying_stoicism_to_everyday_life', 'target': 'achieving_personal_growth'}, {'source': 'challenges_and_criticisms_of_stoicism', 'target': 'criticisms_of_stoic_emotional_suppression'}, {'source': 'challenges_and_criticisms_of_stoicism', 'target': 'difficulty_in_applying_stoic_principles'}, {'source': 'challenges_and_criticisms_of_stoicism', 'target': 'cultural_and_historical_context'}, {'source': 'challenges_and_criticisms_of_stoicism', 'target': 'modern_adaptations_and_interpretations'}]})
     // setGraphData({
     //   nodes: [
     //     { id: "main_question", name: "What causes urban traffic congestion?", group: 0, description: "How can those causes be addressed effectively?" },
@@ -139,6 +236,7 @@ export default function Chat() {
       for (const subChunk of subChunks) {
         if (subChunk.startsWith("0:")) {
           // Update state as each chunk arrives
+          console.log("SUMMARY loop CALL")
           setSummary((prev) => prev + subChunk.trim().slice(3, -1).replaceAll("\\n", "\n"));
         }
       }
@@ -146,6 +244,7 @@ export default function Chat() {
   };
 
   const sendPrompt = () => {
+    console.log("SUMMARY 1 CALL")
     // setSummary("");
     getGraphData();
     if (!graphData) {
@@ -164,7 +263,7 @@ export default function Chat() {
     setError('');
     
     const text = await pdfToText(file);
-
+    setSummary("");
     getGraphData(text);
     if (!graphData) {
       getSummary(text);
@@ -172,9 +271,73 @@ export default function Chat() {
   };
 
   return (
+    <div className="flex h-screen">
+      {/* Sidebar , works only if logged in. If guest, it prompts you to sign in*/}
+      {user && (
+      <div className={clsx(
+        "fixed inset-y-0 left-0 z-30 w-64 bg-white border-r transform transition-transform duration-300 ease-in-out",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          {/* Fixed Header */}
+          <div className="p-4 border-b">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Chat History</h2>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 space-y-3">
+              {queryHistory.map((item) => (
+                <div 
+                  key={item.id}
+                  className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => loadHistoryItem(item)}
+                >
+                  <p className="text-sm font-medium truncate">{item.prompt}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
     <main className="flex flex-col items-center w-full">
-
-      {/* Profile Section */}
+      {/* History bar */}
+      {!isLoadingUser && (
+          user ? (
+      <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-4 top-4 z-20 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+        >
+          <Clock size={20} />
+        </button>
+          ) : (
+            <a
+              href="/api/auth/login?returnTo=/chat"
+              className="fixed left-4 top-4 z-20 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow group"
+              title="Login to Access History"
+            >
+              <div className="relative">
+                <Clock size={20} className="text-gray-400" />
+                <div className="absolute opacity-0 group-hover:opacity-100 left-full ml-2 whitespace-nowrap bg-gray-800 text-white text-sm px-2 py-1 rounded transition-opacity">
+                  Login to access history
+                </div>
+              </div>
+            </a>
+          ))}
+      {/* Profile picture, click to sign out.  If guest, click to return to home */}
+      {/* Signed in profile */}
       <div className="w-full px-4 py-2 flex justify-end">
         {isLoadingUser ? (
           <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
@@ -220,6 +383,7 @@ export default function Chat() {
             )}
           </div>
         ) : (
+          // guest profile
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -267,7 +431,7 @@ export default function Chat() {
                     }}
                     className="text-lg px-4 py-2 rounded-3xl w-[32rem] border-[#671372] border-2 mt-5 resize-none overflow-hidden"
                     style={{
-                      paddingBottom: `${prompt.split("\n").length >= 1 ? "2.3rem" : "0.5rem"}`, // Add extra padding for the last line if multiple lines exist
+                      paddingBottom: `${prompt.split("\n").length >= 1 ? "2.3rem" : "0.5rem"}`, // extra padding for the last line if multiple lines
                     }}/>
           <button disabled={isLoading} onClick={sendPrompt} className={clsx("absolute bottom-3 right-2 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})}>Guide Me</button>
         </div>
@@ -297,7 +461,7 @@ export default function Chat() {
       <div className="flex justify-center mt-5">
         {isLoading &&
         <div className="flex items-center">
-          <div className="mr-2 inline-block text-sm text-gray-700">Generating graph...</div>
+          <div className="mr-2 inline-block text-sm text-gray-700">Generating response...</div>
           <Loader  />
         </div>}
       </div>
@@ -364,6 +528,6 @@ export default function Chat() {
       <p className="absolute top-2 text-gray-400">Responses are generated by AI and may not be fully accurate.</p>
     
     </main>
-    
+    </div>
   );
 }
