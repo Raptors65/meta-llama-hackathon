@@ -40,27 +40,32 @@ export default function Chat() {
 
     setGraphData({
       nodes: [
-        { id: "main_question", name: "What causes urban traffic congestion, and how can those causes be addressed effectively?", group: 0 },
-        { id: "public_transport", name: "Public Transport", group: 1 },
-        { id: "road_infrastructure", name: "Road Infrastructure", group: 2 },
-        { id: "technology", name: "Technology", group: 3 },
-        { id: "policies_and_governance", name: "Policies & Governance", group: 4 },
-        { id: "human_behavior", name: "Human Behavior", group: 5 },
-        { id: "modes", name: "Modes: Buses, trains, subways reduce private vehicle reliance.", group: 1 },
-        { id: "accessibility", name: "Accessibility: Convenience of routes and stops improves adoption.", group: 1 },
-        { id: "challenges", name: "Challenges: Funding and maintenance issues limit effectiveness.", group: 1 },
-        { id: "capacity", name: "Capacity: Roads, bridges, and lanes must accommodate growing vehicle numbers.", group: 2 },
-        { id: "design", name: "Design: Poor layouts lead to bottlenecks and inefficiencies.", group: 2 },
-        { id: "upgradability", name: "Upgradability: Limited space in urban areas complicates expansion.", group: 2 },
-        { id: "traffic_management", name: "Traffic Management: Smart systems reduce bottlenecks in real time.", group: 3 },
-        { id: "navigation_tools", name: "Navigation Tools: Apps like Google Maps ease congestion via better route planning.", group: 3 },
-        { id: "automation", name: "Automation: Autonomous vehicles offer long-term congestion solutions.", group: 3 },
-        { id: "congestion_pricing", name: "Congestion Pricing: Charges during peak hours reduce unnecessary trips.", group: 4 },
-        { id: "incentives", name: "Incentives: Encourage carpooling, biking, or other alternatives.", group: 4 },
-        { id: "regulations", name: "Regulations: Improved rules reduce traffic chaos and accidents.", group: 4 },
-        { id: "preferences", name: "Preferences: Convenience often leads to preference for private cars.", group: 5 },
-        { id: "remote_work", name: "Remote Work: Reduces the number of commuters.", group: 5 },
-        { id: "shared_mobility", name: "Shared Mobility: Carpooling and ride-sharing cut down vehicle numbers.", group: 5 }
+        { id: "main_question", name: "What causes urban traffic congestion?", group: 0, description: "How can those causes be addressed effectively?" },
+        { id: "public_transport", name: "Public Transport", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
+        { id: "road_infrastructure", name: "Road Infrastructure", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
+        { id: "technology", name: "Technology", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
+        { id: "policies_and_governance", name: "Policies & Governance", group: 4, description: "Subsidies, governance improve public transport effectiveness." },
+        { id: "human_behavior", name: "Human Behavior", group: 5, description: "Convenience often leads to preference for private cars." },
+    
+        { id: "modes", name: "Modes", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
+        { id: "accessibility", name: "Accessibility", group: 1, description: "Convenience of routes and stops improves adoption." },
+        { id: "challenges", name: "Challenges", group: 1, description: "Funding and maintenance issues limit effectiveness." },
+    
+        { id: "capacity", name: "Capacity", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
+        { id: "design", name: "Design", group: 2, description: "Poor layouts lead to bottlenecks and inefficiencies." },
+        { id: "upgradability", name: "Upgradability", group: 2, description: "Limited space in urban areas complicates expansion." },
+    
+        { id: "traffic_management", name: "Traffic Management", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
+        { id: "navigation_tools", name: "Navigation Tools", group: 3, description: "Apps like Google Maps ease congestion via better route planning." },
+        { id: "automation", name: "Automation", group: 3, description: "Autonomous vehicles offer long-term congestion solutions." },
+    
+        { id: "congestion_pricing", name: "Congestion Pricing", group: 4, description: "Charges during peak hours reduce unnecessary trips." },
+        { id: "incentives", name: "Incentives", group: 4, description: "Encourage carpooling, biking, or other alternatives." },
+        { id: "regulations", name: "Regulations", group: 4, description: "Improved rules reduce traffic chaos and accidents." },
+    
+        { id: "preferences", name: "Preferences", group: 5, description: "Convenience often leads to preference for private cars." },
+        { id: "remote_work", name: "Remote Work", group: 5, description: "Reduces the number of commuters." },
+        { id: "shared_mobility", name: "Shared Mobility", group: 5, description: "Carpooling and ride-sharing cut down vehicle numbers." }
       ],
       links: [
         { source: "main_question", target: "public_transport" },
@@ -68,21 +73,27 @@ export default function Chat() {
         { source: "main_question", target: "technology" },
         { source: "main_question", target: "policies_and_governance" },
         { source: "main_question", target: "human_behavior" },
+        
         { source: "public_transport", target: "modes" },
         { source: "public_transport", target: "accessibility" },
         { source: "public_transport", target: "challenges" },
+    
         { source: "road_infrastructure", target: "capacity" },
         { source: "road_infrastructure", target: "design" },
         { source: "road_infrastructure", target: "upgradability" },
+    
         { source: "technology", target: "traffic_management" },
         { source: "technology", target: "navigation_tools" },
         { source: "technology", target: "automation" },
+    
         { source: "policies_and_governance", target: "congestion_pricing" },
         { source: "policies_and_governance", target: "incentives" },
         { source: "policies_and_governance", target: "regulations" },
+    
         { source: "human_behavior", target: "preferences" },
         { source: "human_behavior", target: "remote_work" },
         { source: "human_behavior", target: "shared_mobility" },
+    
         { source: "public_transport", target: "road_infrastructure", description: "Efficient public transport requires well-maintained roads and dedicated lanes." },
         { source: "public_transport", target: "policies_and_governance", description: "Subsidies and governance improve public transport effectiveness." },
         { source: "technology", target: "road_infrastructure", description: "Technology like smart traffic lights depends on good infrastructure." },
@@ -161,29 +172,39 @@ export default function Chat() {
             backgroundColor="white"
             nodeAutoColorBy={(node) => node.group}
             nodeThreeObject={(node) => {
-              const sprite = new SpriteText(node.name as string);
-              sprite.color = node.color;
-              sprite.backgroundColor = "#FFF"; // remove if too confusing
-              sprite.textHeight = 5;
-              return sprite;
+              const sprite = new SpriteText(node.name as string + "\n\n\n");
+              sprite.color = node.group === 0 ? "#000000" : node.color;
+              // sprite.backgroundColor = "#FFF"; // remove if too confusing
+              sprite.textHeight = node.group === 0 ? 10 : 5;
+
+              const geometry = new THREE.SphereGeometry(node.group === 0 ? 10 : 5);
+              const material = new THREE.MeshBasicMaterial({ color: node.group === 0 ? "#000000" : node.color, transparent: true, opacity: 1 });
+              const sphere = new THREE.Mesh(geometry, material);
+
+              // sprite.position.add(new THREE.Vector3(0, 0, -20));
+              
+              const group = new THREE.Group();
+              group.add(sprite);
+              group.add(sphere);
+              return group;
             }}
             linkMaterial={() =>
               new THREE.LineBasicMaterial({
                 color: 0xAAAAAA,
               })
             }
-            nodeLabel={() => `<span style="color: #000; background-color: #FFF"></span>`}
-            height={600}
+            nodeLabel={(node) => `<span style="color: #000; background-color: #EEE; border: 1px solid black; padding: 2px 5px; border-radius: 10px;">${node.description}</span>`}
+            height={400}
             graphData={graphData}
           />
         :
         <ForceGraph2D
           backgroundColor="white"
           nodeAutoColorBy={(node) => node.group}
-          nodeLabel={() => `<span style="color: #000; background-color: #FFF"></span>`}
+          nodeLabel={(node) => node.description}
           nodeCanvasObject={(node, ctx, globalScale) => {
             const label = node.name as string;
-            const fontSize = 12/globalScale;
+            const fontSize = (node.group === 0 ? 16 : 12)/globalScale;
             ctx.font = `${fontSize}px Sans-Serif`;
             const textWidth = ctx.measureText(label).width;
             const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
@@ -194,7 +215,7 @@ export default function Chat() {
 
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = node.color;
+            ctx.fillStyle = node.group === 0 ? "#000000" : node.color;
             ctx.fillText(label, node.x!, node.y!);
 
             node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
