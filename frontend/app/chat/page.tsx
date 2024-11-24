@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { FormEventHandler, useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import clsx from "clsx";
@@ -11,6 +11,7 @@ import Loader from "@/components/loader";
 import {
   ReactFlow,
 } from '@xyflow/react';
+import { readPdfText } from 'pdf-text-reader';
 
 import logo from "../logo.png";
 import { Switch } from "@/components/ui/switch";
@@ -18,6 +19,7 @@ import { GraphData } from "react-force-graph-3d";
 
 import { LogOut, User } from 'lucide-react';
 import { useUser } from '@auth0/nextjs-auth0/client';
+import pdfToText from 'react-pdftotext'
 
 
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
@@ -33,81 +35,84 @@ export default function Chat() {
   const { user, isLoading: isLoadingUser } = useUser();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const [error, setError] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
   const getGraphData = async () => {
     setIsLoading(true);
-    // const response = await fetch("/api/get-graph-data", {
-    //   method: "POST",
-    //   body: JSON.stringify({ userPrompt: prompt }),
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //   }
-    // });
-
-    // setGraphData(await response.json());
-
-    setGraphData({
-      nodes: [
-        { id: "main_question", name: "What causes urban traffic congestion?", group: 0, description: "How can those causes be addressed effectively?" },
-        { id: "public_transport", name: "Public Transport", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
-        { id: "road_infrastructure", name: "Road Infrastructure", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
-        { id: "technology", name: "Technology", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
-        { id: "policies_and_governance", name: "Policies & Governance", group: 4, description: "Subsidies, governance improve public transport effectiveness." },
-        { id: "human_behavior", name: "Human Behavior", group: 5, description: "Convenience often leads to preference for private cars." },
-    
-        { id: "modes", name: "Modes", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
-        { id: "accessibility", name: "Accessibility", group: 1, description: "Convenience of routes and stops improves adoption." },
-        { id: "challenges", name: "Challenges", group: 1, description: "Funding and maintenance issues limit effectiveness." },
-    
-        { id: "capacity", name: "Capacity", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
-        { id: "design", name: "Design", group: 2, description: "Poor layouts lead to bottlenecks and inefficiencies." },
-        { id: "upgradability", name: "Upgradability", group: 2, description: "Limited space in urban areas complicates expansion." },
-    
-        { id: "traffic_management", name: "Traffic Management", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
-        { id: "navigation_tools", name: "Navigation Tools", group: 3, description: "Apps like Google Maps ease congestion via better route planning." },
-        { id: "automation", name: "Automation", group: 3, description: "Autonomous vehicles offer long-term congestion solutions." },
-    
-        { id: "congestion_pricing", name: "Congestion Pricing", group: 4, description: "Charges during peak hours reduce unnecessary trips." },
-        { id: "incentives", name: "Incentives", group: 4, description: "Encourage carpooling, biking, or other alternatives." },
-        { id: "regulations", name: "Regulations", group: 4, description: "Improved rules reduce traffic chaos and accidents." },
-    
-        { id: "preferences", name: "Preferences", group: 5, description: "Convenience often leads to preference for private cars." },
-        { id: "remote_work", name: "Remote Work", group: 5, description: "Reduces the number of commuters." },
-        { id: "shared_mobility", name: "Shared Mobility", group: 5, description: "Carpooling and ride-sharing cut down vehicle numbers." }
-      ],
-      links: [
-        { source: "main_question", target: "public_transport" },
-        { source: "main_question", target: "road_infrastructure" },
-        { source: "main_question", target: "technology" },
-        { source: "main_question", target: "policies_and_governance" },
-        { source: "main_question", target: "human_behavior" },
-        
-        { source: "public_transport", target: "modes" },
-        { source: "public_transport", target: "accessibility" },
-        { source: "public_transport", target: "challenges" },
-    
-        { source: "road_infrastructure", target: "capacity" },
-        { source: "road_infrastructure", target: "design" },
-        { source: "road_infrastructure", target: "upgradability" },
-    
-        { source: "technology", target: "traffic_management" },
-        { source: "technology", target: "navigation_tools" },
-        { source: "technology", target: "automation" },
-    
-        { source: "policies_and_governance", target: "congestion_pricing" },
-        { source: "policies_and_governance", target: "incentives" },
-        { source: "policies_and_governance", target: "regulations" },
-    
-        { source: "human_behavior", target: "preferences" },
-        { source: "human_behavior", target: "remote_work" },
-        { source: "human_behavior", target: "shared_mobility" },
-    
-        { source: "public_transport", target: "road_infrastructure", description: "Efficient public transport requires well-maintained roads and dedicated lanes." },
-        { source: "public_transport", target: "policies_and_governance", description: "Subsidies and governance improve public transport effectiveness." },
-        { source: "technology", target: "road_infrastructure", description: "Technology like smart traffic lights depends on good infrastructure." },
-        { source: "human_behavior", target: "policies_and_governance", description: "Policies influence commuting choices and encourage alternatives like carpooling." },
-        { source: "road_infrastructure", target: "human_behavior", description: "Poor infrastructure affects driver behavior and leads to inefficiencies." }
-      ]
+    const response = await fetch("/api/get-graph-data", {
+      method: "POST",
+      body: JSON.stringify({ userPrompt: prompt }),
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
+
+    setGraphData(await response.json());
+
+    // setGraphData({
+    //   nodes: [
+    //     { id: "main_question", name: "What causes urban traffic congestion?", group: 0, description: "How can those causes be addressed effectively?" },
+    //     { id: "public_transport", name: "Public Transport", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
+    //     { id: "road_infrastructure", name: "Road Infrastructure", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
+    //     { id: "technology", name: "Technology", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
+    //     { id: "policies_and_governance", name: "Policies & Governance", group: 4, description: "Subsidies, governance improve public transport effectiveness." },
+    //     { id: "human_behavior", name: "Human Behavior", group: 5, description: "Convenience often leads to preference for private cars." },
+    
+    //     { id: "modes", name: "Modes", group: 1, description: "Buses, trains, subways reduce private vehicle reliance." },
+    //     { id: "accessibility", name: "Accessibility", group: 1, description: "Convenience of routes and stops improves adoption." },
+    //     { id: "challenges", name: "Challenges", group: 1, description: "Funding and maintenance issues limit effectiveness." },
+    
+    //     { id: "capacity", name: "Capacity", group: 2, description: "Roads, bridges, and lanes must accommodate growing vehicle numbers." },
+    //     { id: "design", name: "Design", group: 2, description: "Poor layouts lead to bottlenecks and inefficiencies." },
+    //     { id: "upgradability", name: "Upgradability", group: 2, description: "Limited space in urban areas complicates expansion." },
+    
+    //     { id: "traffic_management", name: "Traffic Management", group: 3, description: "Smart systems reduce bottlenecks in real-time." },
+    //     { id: "navigation_tools", name: "Navigation Tools", group: 3, description: "Apps like Google Maps ease congestion via better route planning." },
+    //     { id: "automation", name: "Automation", group: 3, description: "Autonomous vehicles offer long-term congestion solutions." },
+    
+    //     { id: "congestion_pricing", name: "Congestion Pricing", group: 4, description: "Charges during peak hours reduce unnecessary trips." },
+    //     { id: "incentives", name: "Incentives", group: 4, description: "Encourage carpooling, biking, or other alternatives." },
+    //     { id: "regulations", name: "Regulations", group: 4, description: "Improved rules reduce traffic chaos and accidents." },
+    
+    //     { id: "preferences", name: "Preferences", group: 5, description: "Convenience often leads to preference for private cars." },
+    //     { id: "remote_work", name: "Remote Work", group: 5, description: "Reduces the number of commuters." },
+    //     { id: "shared_mobility", name: "Shared Mobility", group: 5, description: "Carpooling and ride-sharing cut down vehicle numbers." }
+    //   ],
+    //   links: [
+    //     { source: "main_question", target: "public_transport" },
+    //     { source: "main_question", target: "road_infrastructure" },
+    //     { source: "main_question", target: "technology" },
+    //     { source: "main_question", target: "policies_and_governance" },
+    //     { source: "main_question", target: "human_behavior" },
+        
+    //     { source: "public_transport", target: "modes" },
+    //     { source: "public_transport", target: "accessibility" },
+    //     { source: "public_transport", target: "challenges" },
+    
+    //     { source: "road_infrastructure", target: "capacity" },
+    //     { source: "road_infrastructure", target: "design" },
+    //     { source: "road_infrastructure", target: "upgradability" },
+    
+    //     { source: "technology", target: "traffic_management" },
+    //     { source: "technology", target: "navigation_tools" },
+    //     { source: "technology", target: "automation" },
+    
+    //     { source: "policies_and_governance", target: "congestion_pricing" },
+    //     { source: "policies_and_governance", target: "incentives" },
+    //     { source: "policies_and_governance", target: "regulations" },
+    
+    //     { source: "human_behavior", target: "preferences" },
+    //     { source: "human_behavior", target: "remote_work" },
+    //     { source: "human_behavior", target: "shared_mobility" },
+    
+    //     { source: "public_transport", target: "road_infrastructure", description: "Efficient public transport requires well-maintained roads and dedicated lanes." },
+    //     { source: "public_transport", target: "policies_and_governance", description: "Subsidies and governance improve public transport effectiveness." },
+    //     { source: "technology", target: "road_infrastructure", description: "Technology like smart traffic lights depends on good infrastructure." },
+    //     { source: "human_behavior", target: "policies_and_governance", description: "Policies influence commuting choices and encourage alternatives like carpooling." },
+    //     { source: "road_infrastructure", target: "human_behavior", description: "Poor infrastructure affects driver behavior and leads to inefficiencies." }
+    //   ]
+    // });
     setIsLoading(false);
   };
 
@@ -144,6 +149,32 @@ export default function Chat() {
     setSummary("");
     getGraphData();
     getSummary();
+  };
+
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
+    e.preventDefault();
+    
+    if (!file) {
+      setError('Please select a PDF file');
+      return;
+    }
+    
+    setError('');
+    
+    const text = await pdfToText(file);
+
+    setIsLoading(true);
+    const response = await fetch("/api/get-graph-data", {
+      method: "POST",
+      body: JSON.stringify({ userPrompt: text }),
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    setGraphData(await response.json());
+
+    setIsLoading(false);
   };
 
   return (
@@ -204,6 +235,12 @@ export default function Chat() {
           <button disabled={isLoading} onClick={sendPrompt} className={clsx("absolute right-2 top-7 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})}>Guide Me</button>
         </div>
       </div>
+      <form onSubmit={handleSubmit}>
+        <input type="file" accept=".pdf" onChange={(e) => {
+          setFile(e.target.files && e.target.files[0]);
+        }} />
+        <input type="submit" value="Upload file" />
+      </form>
       <div className="w-96 mb-8">
         <div className="flex justify-between items-center">
           <div className="text-xl">Switch to 3D</div>

@@ -24,12 +24,12 @@ export async function POST(req: Request) {
   ] as (CoreUserMessage | CoreSystemMessage)[];
 
   const nebius = createOpenAI({
-    baseURL: "https://api.studio.nebius.ai/v1/",
+    baseURL: "https://api.groq.com/openai/v1",
     apiKey: process.env.NEBIUS_API_KEY
   })
 
   const result = streamText({
-    model: nebius("meta-llama/Meta-Llama-3.1-70B-Instruct"),
+    model: nebius("llama-3.2-90b-vision-preview"),
     messages,
   });
 
