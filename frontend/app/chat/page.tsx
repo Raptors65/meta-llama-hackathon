@@ -38,11 +38,11 @@ export default function Chat() {
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  const getGraphData = async () => {
+  const getGraphData = async (p = prompt) => {
     setIsLoading(true);
     const response = await fetch("/api/get-graph-data", {
       method: "POST",
-      body: JSON.stringify({ userPrompt: prompt }),
+      body: JSON.stringify({ userPrompt: p }),
       headers: {
         'Content-Type': 'application/json',
       }
@@ -116,10 +116,10 @@ export default function Chat() {
     setIsLoading(false);
   };
 
-  const getSummary = async () => {
+  const getSummary = async (p = prompt) => {
     const response = await fetch("/api/summary", {
       method: "POST",
-      body: JSON.stringify({ userPrompt: prompt }),
+      body: JSON.stringify({ userPrompt: p }),
       headers: {
         'Content-Type': 'application/json',
       }
@@ -163,18 +163,8 @@ export default function Chat() {
     
     const text = await pdfToText(file);
 
-    setIsLoading(true);
-    const response = await fetch("/api/get-graph-data", {
-      method: "POST",
-      body: JSON.stringify({ userPrompt: text }),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    setGraphData(await response.json());
-
-    setIsLoading(false);
+    getGraphData(text);
+    getSummary(text);
   };
 
   return (
@@ -258,7 +248,7 @@ export default function Chat() {
         )}
       </div>
 
-      <div className="mx-5 flex flex-col items-center mb-6">
+      <div className="mx-5 flex flex-col items-center">
         <Image alt="Logo" src={logo} width={227} height={101} />
         <div className="relative mt-5">
           <textarea value={prompt} 
@@ -278,13 +268,18 @@ export default function Chat() {
           <button disabled={isLoading} onClick={sendPrompt} className={clsx("absolute bottom-3 right-2 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})}>Guide Me</button>
         </div>
       </div>
-      <form onSubmit={handleSubmit}>
-        <input type="file" accept=".pdf" onChange={(e) => {
+
+      <p className="font-bold">OR</p>
+
+      <form onSubmit={handleSubmit} className="mt-2">
+        <label htmlFor="upload-pdf" className={clsx("inline-block rounded-full py-1 px-2 text-black transition-all duration-300 ease-in-out transform relative hover:shadow-lg hover:scale-105 cursor-pointer", {"bg-[#671372] text-white": file === null, "bg-white": file !== null})}>{file ? "File selected" : "Select a PDF..."}</label>
+        <input type="file" accept=".pdf" id="upload-pdf" className="opacity-0 absolute -z-10" onChange={(e) => {
           setFile(e.target.files && e.target.files[0]);
         }} />
-        <input type="submit" value="Upload file" />
+        {file && <input type="submit" className={clsx("cursor-pointer ml-5 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})} value="Upload file" />}
       </form>
-      <div className="w-96 mb-8">
+
+      <div className="w-96 mt-6">
         <div className="flex justify-between items-center">
           <div className="text-xl">Switch to 3D</div>
           <Switch

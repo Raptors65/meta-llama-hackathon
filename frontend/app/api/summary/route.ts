@@ -7,7 +7,7 @@ type GetGraphDataRequest = {
   userPrompt: string;
 }
 
-const systemMessage = `Give a short 1-2 sentence summary on the topic that the user specifies.`
+const systemMessage = `Give a short 1-2 sentence summary on the topic or text that the user sends.`
 
 export async function POST(req: Request) {
   const { userPrompt } = await req.json() as GetGraphDataRequest;
