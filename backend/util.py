@@ -184,8 +184,8 @@ follow the same format for the output and no other text, and focus on informatio
     * Different sub-main topics, explaining how they interact or influence each other.
     * Sub-topics within or across sub-main topics, showing their dependencies or mutual effects.
 
-    Represent these relationships clearly and concisely in a structured format, such as a JSON-like structure, a bulleted list, or diagrams.
-
+    Represent these relationships clearly and concisely in a structured format, such as a JSON-like structure, a bulleted list, or diagrams. 
+    
     This should be the format for the output JSON:
     {{
       "nodes": [
@@ -193,7 +193,7 @@ follow the same format for the output and no other text, and focus on informatio
           "id": "string",              // Unique identifier for the node
           "name": "string",            // Display name for the node
           "group": "number",           // Category or group identifier (for clustering or coloring)
-          "description": "string"      // Additional information about the node (optional)
+          "description": "string"      // Additional information about the node
         }}
       ],
       "links": [
@@ -204,6 +204,8 @@ follow the same format for the output and no other text, and focus on informatio
         }}
       ]
     }}
+    
+    Each subtopic and its topics should have nodes with proper name and descriptions and then relations between 2 nodes, all divide into right groups. Output the nodes first then the Links
 
     Here is all the topic that you have right now:
     {sub_main_topic}
