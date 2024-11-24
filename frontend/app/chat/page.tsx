@@ -16,6 +16,10 @@ import logo from "../logo.png";
 import { Switch } from "@/components/ui/switch";
 import { GraphData } from "react-force-graph-3d";
 
+import { LogOut, User } from 'lucide-react';
+import { useUser } from '@auth0/nextjs-auth0/client';
+
+
 const ForceGraph3D = dynamic(() => import("react-force-graph-3d"));
 const ForceGraph2D = dynamic(() => import("react-force-graph-2d"));
 
@@ -25,6 +29,9 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [is3D, setIs3D] = useState(false);
+
+  const { user, isLoading: isLoadingUser } = useUser();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const getGraphData = async () => {
     setIsLoading(true);
@@ -141,6 +148,55 @@ export default function Chat() {
 
   return (
     <main className="flex flex-col items-center w-full">
+
+      {/* Profile Section */}
+      <div className="w-full px-4 py-2 flex justify-end">
+        {isLoadingUser ? (
+          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+        ) : user && (
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center justify-center w-10 h-10 rounded-full focus:outline-none focus:ring-2 focus:ring-[#671372] focus:ring-offset-2"
+            >
+              {user.picture ? (
+                <img
+                  src={user.picture}
+                  alt={user.name || 'Profile'}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-[#671372] flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+              )}
+            </button>
+
+            {isProfileOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsProfileOpen(false)} 
+                />
+                <div className="absolute right-0 mt-2 w-48 py-2 bg-white rounded-lg shadow-lg border border-gray-100 z-20">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="overflow-ellipsis text-sm font-semibold text-gray-700">{user.name}</p>
+                    <p className="overflow-ellipsis text-sm text-gray-500 truncate">{user.email}</p>
+                  </div>
+                  <a
+                    href="/api/auth/logout"
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log Out
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="mx-5 flex flex-col items-center mb-5">
         <Image alt="Logo" src={logo} width={227} height={101} />
         <div className="relative">
