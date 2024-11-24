@@ -294,7 +294,7 @@ export async function POST(req: Request) {
   })
 
   const result = await generateText({
-    model: nebius("llama-3.2-90b-vision-preview"),
+    model: nebius("llama-3.2-90b-text-preview"),
     messages,
   });
 
