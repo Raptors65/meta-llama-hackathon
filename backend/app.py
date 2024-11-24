@@ -9,7 +9,7 @@ app = Flask(__name__)
 def hello_world():  # put application's code here
     return 'its working!'
 
-@app.route('/api/make graph', methods=['GET'])
+@app.route('/api/make-graph', methods=['GET'])
 def make_graph():
     query = request.headers.get('query')
 
