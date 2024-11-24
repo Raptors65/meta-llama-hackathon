@@ -17,7 +17,7 @@ import logo from "../logo.png";
 import { Switch } from "@/components/ui/switch";
 import { GraphData } from "react-force-graph-3d";
 
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Clock, X} from 'lucide-react';
 import { useUser } from '@auth0/nextjs-auth0/client';
 import pdfToText from 'react-pdftotext'
 import { createClient } from '@supabase/supabase-js';
@@ -30,12 +30,23 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// for history bar
+interface QueryHistory {
+  id: string;
+  prompt: string;
+  generated_summary: string;
+  graph_data: any;
+  created_at: string;
+}
+
 export default function Chat() {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [is3D, setIs3D] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [queryHistory, setQueryHistory] = useState<QueryHistory[]>([]);
 
   const { user, isLoading: isLoadingUser } = useUser();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -44,37 +55,75 @@ export default function Chat() {
   const [file, setFile] = useState<File | null>(null);
 
   // Runs upon login, checks if someone is logged in and fetches most recent query if so
-  useEffect(() => {
-    if (user?.sub) {
-      fetchMostRecentQuery();
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (user?.sub) {
+  //     fetchMostRecentQuery();
+  //   }
+  // }, [user]);
 
-  const fetchMostRecentQuery = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('graph_data')
-        .select('*')
-        .eq('user_id', user?.sub)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error('Error fetching recent query:', error);
-        return;
+    // Runs upon login, checks if someone is logged in and fetches history if so
+    useEffect(() => {
+      if (user?.sub) {
+        fetchQueryHistory();
       }
-
-      if (data && data.length > 0) {
-        const recentQuery = data[0];
-        setPrompt(recentQuery.prompt);
-        console.log("SUMMARY 2 CALL")
-        setSummary(recentQuery.generated_summary);
-        setGraphData(recentQuery.graph_data);
+    }, [user]);
+  
+    const fetchQueryHistory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('graph_data')
+          .select('*')
+          .eq('user_id', user?.sub)
+          .order('created_at', { ascending: false });
+  
+        if (error) {
+          console.error('Error fetching query history:', error);
+          return;
+        }
+  
+        if (data) {
+          setQueryHistory(data);
+        }
+      } catch (error) {
+        console.error('Error fetching query history:', error);
       }
-    } catch (error) {
-      console.error('Error fetching recent query:', error);
-    }
-  };
+    };
+  
+    const loadHistoryItem = (item: QueryHistory) => {
+      setPrompt(item.prompt);
+      setSummary(item.generated_summary);
+      setGraphData(item.graph_data);
+      // to close sidebar on click
+      setIsSidebarOpen(false);
+    };
+
+// THE COMMENTED OUT CODE IS FOR IF WE ONLY WANT MOST RECENT CHAT
+
+  // const fetchMostRecentQuery = async () => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('graph_data')
+  //       .select('*')
+  //       .eq('user_id', user?.sub)
+  //       .order('created_at', { ascending: false })
+  //       .limit(1);
+
+  //     if (error) {
+  //       console.error('Error fetching recent query:', error);
+  //       return;
+  //     }
+
+  //     if (data && data.length > 0) {
+  //       const recentQuery = data[0];
+  //       setPrompt(recentQuery.prompt);
+  //       console.log("SUMMARY 2 CALL")
+  //       setSummary(recentQuery.generated_summary);
+  //       setGraphData(recentQuery.graph_data);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching recent query:', error);
+  //   }
+  // };
 
   const getGraphData = async (p = prompt) => {
     setIsLoading(true);
@@ -225,9 +274,73 @@ export default function Chat() {
   };
 
   return (
+    <div className="flex h-screen">
+      {/* Sidebar , works only if logged in. If guest, it prompts you to sign in*/}
+      {user && (
+      <div className={clsx(
+        "fixed inset-y-0 left-0 z-30 w-64 bg-white border-r transform transition-transform duration-300 ease-in-out",
+        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          {/* Fixed Header */}
+          <div className="p-4 border-b">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Chat History</h2>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 space-y-3">
+              {queryHistory.map((item) => (
+                <div 
+                  key={item.id}
+                  className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => loadHistoryItem(item)}
+                >
+                  <p className="text-sm font-medium truncate">{item.prompt}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      )}
     <main className="flex flex-col items-center w-full">
-
-      {/* Profile Section */}
+      {/* History bar */}
+      {!isLoadingUser && (
+          user ? (
+      <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed left-4 top-4 z-20 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow"
+        >
+          <Clock size={20} />
+        </button>
+          ) : (
+            <a
+              href="/api/auth/login?returnTo=/chat"
+              className="fixed left-4 top-4 z-20 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-shadow group"
+              title="Login to Access History"
+            >
+              <div className="relative">
+                <Clock size={20} className="text-gray-400" />
+                <div className="absolute opacity-0 group-hover:opacity-100 left-full ml-2 whitespace-nowrap bg-gray-800 text-white text-sm px-2 py-1 rounded transition-opacity">
+                  Login to access history
+                </div>
+              </div>
+            </a>
+          ))}
+      {/* Profile picture, click to sign out.  If guest, click to return to home */}
+      {/* Signed in profile */}
       <div className="w-full px-4 py-2 flex justify-end">
         {isLoadingUser ? (
           <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
@@ -273,6 +386,7 @@ export default function Chat() {
             )}
           </div>
         ) : (
+          // guest profile
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -320,7 +434,7 @@ export default function Chat() {
                     }}
                     className="text-lg px-4 py-2 rounded-3xl w-[32rem] border-[#671372] border-2 mt-5 resize-none overflow-hidden"
                     style={{
-                      paddingBottom: `${prompt.split("\n").length >= 1 ? "2.3rem" : "0.5rem"}`, // Add extra padding for the last line if multiple lines exist
+                      paddingBottom: `${prompt.split("\n").length >= 1 ? "2.3rem" : "0.5rem"}`, // extra padding for the last line if multiple lines
                     }}/>
           <button disabled={isLoading} onClick={sendPrompt} className={clsx("absolute bottom-3 right-2 rounded-full text-white bg-[#671372]  py-1 px-2 transition-all duration-300 ease-in-out transform" , {"opacity-75": isLoading, "hover:shadow-lg hover:scale-105": !isLoading})}>Guide Me</button>
         </div>
@@ -416,6 +530,6 @@ export default function Chat() {
       <p className="absolute top-2 text-gray-400">Responses are generated by AI and may not be fully accurate.</p>
     
     </main>
-    
+    </div>
   );
 }
