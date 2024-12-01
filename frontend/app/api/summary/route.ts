@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   })
 
   const result = streamText({
-    model: nebius("llama-3.2-90b-text-preview"),
+    model: nebius("llama-3.2-90b-vision-preview"),
     messages,
   });
 
